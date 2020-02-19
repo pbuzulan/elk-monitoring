@@ -1,0 +1,114 @@
+version: "3.7"
+services:
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:${ELASTICSEARCH_VERSION:-7.5.0}
+    hostname: "{{.Node.Hostname}}-filebeat"
+    user: root
+    networks:
+      - elastic
+    configs:
+      - source: filebeat_config
+        target: /usr/share/filebeat/filebeat.yml
+    volumes:
+      - filebeat:/usr/share/filebeat/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
+      - /var/log/:/var/log/:ro
+    environment:
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-node1}
+      - KIBANA_HOST=${KIBANA_HOST:-node1}
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME:-elastic}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD:-changeme}
+    command: ["--strict.perms=false"]
+    deploy:
+      mode: global
+  auditbeat:
+    image: docker.elastic.co/beats/auditbeat:${ELASTICSEARCH_VERSION:-7.5.0}
+    hostname: "{{.Node.Hostname}}-auditbeat"
+    user: root
+    pid: host
+    cap_add:
+      - AUDIT_CONTROL
+      - AUDIT_READ
+    networks:
+      - elastic
+    configs:
+      - source: auditbeat_config
+        target: /usr/share/auditbeat/auditbeat.yml
+    volumes:
+      - auditbeat:/usr/share/auditbeat/data
+      - /var/log:/var/log:ro
+    environment:
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-node1}
+      - KIBANA_HOST=${KIBANA_HOST:-node1}
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME:-elastic}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD:-changeme}
+    command: ["--strict.perms=false"]
+    deploy:
+      mode: global
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:${ELASTICSEARCH_VERSION:-7.5.0}
+    hostname: "{{.Node.Hostname}}-metricbeat"
+    user: root
+    networks:
+      - elastic
+    configs:
+      - source: metricbeat_config
+        target: /usr/share/metricbeat/metricbeat.yml
+    volumes:
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /:/hostfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - metricbeat:/usr/share/metricbeat/data
+    environment:
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-node1}
+      - KIBANA_HOST=${KIBANA_HOST:-node1}
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME:-elastic}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD:-changeme}
+    command: ["--strict.perms=false", "-system.hostfs=/hostfs"]
+    deploy:
+      mode: global
+  packetbeat:
+    image: docker.elastic.co/beats/packetbeat:${ELASTICSEARCH_VERSION:-7.5.0}
+    hostname: "{{.Node.Hostname}}-packetbeat"
+    user: root
+    networks:
+      - elastic
+    configs:
+      - source: packetbeat_config
+        target: /usr/share/packetbeat/packetbeat.yml
+    volumes:
+      - packetbeat:/usr/share/packetbeat/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-node1}
+      - KIBANA_HOST=${KIBANA_HOST:-node1}
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME:-elastic}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD:-changeme}
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    command: ["--strict.perms=false"]
+    deploy:
+      mode: global
+networks:
+  elastic:
+    external: true
+    name: host
+
+volumes:
+  auditbeat:
+  filebeat:
+  metricbeat:
+  packetbeat:
+
+configs:
+  auditbeat_config:
+    file: $PWD/config/auditbeat/auditbeat.yml
+  filebeat_config:
+    file: $PWD/config/filebeat/filebeat.yml
+  metricbeat_config:
+    file: $PWD/config/metricbeat/metricbeat.yml
+  packetbeat_config:
+    file: $PWD/config/packetbeat/packetbeat.yml
