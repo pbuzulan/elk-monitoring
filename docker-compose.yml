@@ -5,9 +5,6 @@ services:
     hostname: "{{.Node.Hostname}}-filebeat"
     user: root
     network_mode: "host"
-    configs:
-      - source: filebeat_config
-        target: /usr/share/filebeat/filebeat.yml
     volumes:
       - filebeat:/usr/share/filebeat/data
       - /var/run/docker.sock:/var/run/docker.sock
@@ -44,9 +41,6 @@ services:
     hostname: "{{.Node.Hostname}}-metricbeat"
     user: root
     network_mode: "host"
-    configs:
-      - source: metricbeat_config
-        target: /usr/share/metricbeat/metricbeat.yml
     volumes:
       - ./config/metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
       - /proc:/hostfs/proc:ro
@@ -65,9 +59,6 @@ services:
     hostname: "{{.Node.Hostname}}-packetbeat"
     user: root
     network_mode: "host"
-    configs:
-      - source: packetbeat_config
-        target: /usr/share/packetbeat/packetbeat.yml
     volumes:
       - ./config/packetbeat/packetbeat.yml:/usr/share/packetbeat/packetbeat.yml
       - packetbeat:/usr/share/packetbeat/data
