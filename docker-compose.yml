@@ -13,14 +13,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
       - /var/log/:/var/log/:ro
+      - ./config/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
     environment:
       - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-node1}
       - KIBANA_HOST=${KIBANA_HOST:-node1}
       - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME:-elastic}
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD:-changeme}
     command: ["--strict.perms=false"]
-    deploy:
-      mode: global
   auditbeat:
     image: docker.elastic.co/beats/auditbeat:${ELASTICSEARCH_VERSION:-7.5.0}
     hostname: "{{.Node.Hostname}}-auditbeat"
@@ -30,10 +29,8 @@ services:
       - AUDIT_CONTROL
       - AUDIT_READ
     network_mode: "host"
-    configs:
-      - source: auditbeat_config
-        target: /usr/share/auditbeat/auditbeat.yml
     volumes:
+      - ./config/auditbeat/auditbeat.yml:/usr/share/auditbeat/auditbeat.yml
       - auditbeat:/usr/share/auditbeat/data
       - /var/log:/var/log:ro
     environment:
@@ -42,8 +39,6 @@ services:
       - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME:-elastic}
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD:-changeme}
     command: ["--strict.perms=false"]
-    deploy:
-      mode: global
   metricbeat:
     image: docker.elastic.co/beats/metricbeat:${ELASTICSEARCH_VERSION:-7.5.0}
     hostname: "{{.Node.Hostname}}-metricbeat"
@@ -53,6 +48,7 @@ services:
       - source: metricbeat_config
         target: /usr/share/metricbeat/metricbeat.yml
     volumes:
+      - ./config/metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
       - /proc:/hostfs/proc:ro
       - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
       - /:/hostfs:ro
@@ -64,8 +60,6 @@ services:
       - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME:-elastic}
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD:-changeme}
     command: ["--strict.perms=false", "-system.hostfs=/hostfs"]
-    deploy:
-      mode: global
   packetbeat:
     image: docker.elastic.co/beats/packetbeat:${ELASTICSEARCH_VERSION:-7.5.0}
     hostname: "{{.Node.Hostname}}-packetbeat"
@@ -75,6 +69,7 @@ services:
       - source: packetbeat_config
         target: /usr/share/packetbeat/packetbeat.yml
     volumes:
+      - ./config/packetbeat/packetbeat.yml:/usr/share/packetbeat/packetbeat.yml
       - packetbeat:/usr/share/packetbeat/data
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -86,8 +81,6 @@ services:
       - NET_RAW
       - NET_ADMIN
     command: ["--strict.perms=false"]
-    deploy:
-      mode: global
 
 
 
@@ -96,13 +89,3 @@ volumes:
   filebeat:
   metricbeat:
   packetbeat:
-
-configs:
-  auditbeat_config:
-    file: $PWD/config/auditbeat/auditbeat.yml
-  filebeat_config:
-    file: $PWD/config/filebeat/filebeat.yml
-  metricbeat_config:
-    file: $PWD/config/metricbeat/metricbeat.yml
-  packetbeat_config:
-    file: $PWD/config/packetbeat/packetbeat.yml
