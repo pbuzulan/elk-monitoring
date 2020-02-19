@@ -4,8 +4,7 @@ services:
     image: docker.elastic.co/beats/filebeat:${ELASTICSEARCH_VERSION:-7.5.0}
     hostname: "{{.Node.Hostname}}-filebeat"
     user: root
-    networks:
-      - elastic
+    network_mode: "host"
     configs:
       - source: filebeat_config
         target: /usr/share/filebeat/filebeat.yml
@@ -30,8 +29,7 @@ services:
     cap_add:
       - AUDIT_CONTROL
       - AUDIT_READ
-    networks:
-      - elastic
+    network_mode: "host"
     configs:
       - source: auditbeat_config
         target: /usr/share/auditbeat/auditbeat.yml
@@ -50,8 +48,7 @@ services:
     image: docker.elastic.co/beats/metricbeat:${ELASTICSEARCH_VERSION:-7.5.0}
     hostname: "{{.Node.Hostname}}-metricbeat"
     user: root
-    networks:
-      - elastic
+    network_mode: "host"
     configs:
       - source: metricbeat_config
         target: /usr/share/metricbeat/metricbeat.yml
@@ -73,8 +70,7 @@ services:
     image: docker.elastic.co/beats/packetbeat:${ELASTICSEARCH_VERSION:-7.5.0}
     hostname: "{{.Node.Hostname}}-packetbeat"
     user: root
-    networks:
-      - elastic
+    network_mode: "host"
     configs:
       - source: packetbeat_config
         target: /usr/share/packetbeat/packetbeat.yml
@@ -92,10 +88,8 @@ services:
     command: ["--strict.perms=false"]
     deploy:
       mode: global
-networks:
-  elastic:
-    external: true
-    name: host
+
+
 
 volumes:
   auditbeat:
